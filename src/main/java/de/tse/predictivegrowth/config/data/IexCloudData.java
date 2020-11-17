@@ -13,7 +13,7 @@ public class IexCloudData {
 
     private String baseUrl;
 
-    private String apiVersion;
+    private String apiVersionUrl;
 
     private String publishableToken;
 

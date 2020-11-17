@@ -7,5 +7,9 @@ import java.util.List;
 @Data
 public class StockHistory {
 
-    private List<StockData> stockData;
+    private final String stockIdentifier;
+
+    private final String companyName;
+
+    private final List<StockDataDay> stockDataDayList;
 }

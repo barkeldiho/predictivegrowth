@@ -4,7 +4,6 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.GsonBuilder;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import org.springframework.beans.factory.annotation.Value;

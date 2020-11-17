@@ -1,12 +1,11 @@
 package de.tse.predictivegrowth.model;
 
-import de.tse.predictivegrowth.service.impl.AbstractRestService;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-public class StockData extends AbstractRestService<StockData> {
+public class StockDataDay {
 
     private LocalDate localDate;
 
