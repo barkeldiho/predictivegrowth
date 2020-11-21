@@ -18,4 +18,6 @@ public class IexCloudData {
     private String publishableToken;
 
     private String secretToken;
+
+    private String maxTimespan;
 }

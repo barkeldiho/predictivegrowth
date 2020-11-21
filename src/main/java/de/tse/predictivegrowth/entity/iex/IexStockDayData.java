@@ -1,13 +1,15 @@
-package de.tse.predictivegrowth.model;
+package de.tse.predictivegrowth.entity.iex;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 
 @Data
-public class StockDataDay {
+@Builder
+public class IexStockDayData {
 
-    private LocalDate localDate;
+    private LocalDate date;
 
     private Long open;
 
