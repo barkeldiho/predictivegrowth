@@ -1,0 +1,48 @@
+version: '3.7'
+services:
+  pg-server:
+    container_name: pg-server
+    build:
+      context: .
+      dockerfile: Server.Dockerfile
+    ports:
+      - 9090:9090
+      - 9091:9091
+    environment:
+      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=*:9091,suspend=n,server=y
+    networks:
+      - pg-network
+    links:
+      - pg-database:pg-database
+    logging:
+      driver: json-file
+    depends_on:
+      - pg-database
+
+
+  pg-database:
+    container_name: pg-database
+    image: postgres:13.1
+    ports:
+      - 5432:5432
+    volumes:
+      - pg-database-volume:/var/lib/postgresql/data
+      - ../initDb.sql:/docker-entrypoint-initdb.d/1-initDb.sql
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: predictivegrowth
+    networks:
+      pg-network:
+        aliases:
+          - pg-database
+
+
+networks:
+  pg-network:
+    driver: bridge
+
+
+volumes:
+  pg-database-volume:
+    external: true

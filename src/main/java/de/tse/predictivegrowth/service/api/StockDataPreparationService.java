@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface StockDataPreparationService {
 
-    List<StockDayData> prepare(final List<StockDayData> stockDayDataList);
+    List<StockDayData> fullyPrepare(final List<StockDayData> stockDayDataList);
 }

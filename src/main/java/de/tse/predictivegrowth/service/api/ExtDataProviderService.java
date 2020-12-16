@@ -2,7 +2,7 @@ package de.tse.predictivegrowth.service.api;
 
 import de.tse.predictivegrowth.model.StockHistory;
 
-public interface IexCloudService {
+public interface ExtDataProviderService {
 
     /**
      *

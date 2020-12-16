@@ -1,21 +1,37 @@
 package de.tse.predictivegrowth.service.api;
 
+import de.tse.predictivegrowth.enumeration.DataProvider;
 import de.tse.predictivegrowth.model.StockHistory;
+import de.tse.predictivegrowth.model.StockHistorySummary;
+
+import java.util.List;
 
 public interface StockDataService {
 
     /**
-     * Method returns historic stock data for the stock identified by the supplied stock identifier.
      *
-     * @param stockIdentifier identifies the stock.
-     * @return the complete {@link de.tse.predictivegrowth.model.StockHistory} of a stock
+     * @return
      */
-    StockHistory getStockHistory(final String stockIdentifier);
+    List<StockHistorySummary> findAllStockHistorySummaries();
 
     /**
      *
-     * @param stockHistory
+     * @param id
      * @return
      */
+    StockHistory getStockHistory(final Long id);
+
+    /**
+     *
+     * @param stockIdentifier
+     * @return
+     */
+    StockHistorySummary requestStockHistoryFromProvider(final String stockIdentifier, final DataProvider dataProvider);
+
+        /**
+         *
+         * @param stockHistory
+         * @return
+         */
     StockHistory saveStockHistory(final StockHistory stockHistory);
 }

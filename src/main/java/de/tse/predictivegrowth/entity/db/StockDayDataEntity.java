@@ -1,7 +1,6 @@
 package de.tse.predictivegrowth.entity.db;
 
 import de.tse.predictivegrowth.model.StockDayData;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,10 +10,9 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "stock_data")
-@Getter
-@Setter
-@AllArgsConstructor
 @NoArgsConstructor
+@Setter
+@Getter
 public class StockDayDataEntity {
 
     public StockDayDataEntity(final StockDayData stockDayData) {

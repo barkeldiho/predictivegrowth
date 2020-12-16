@@ -10,12 +10,12 @@
 	</parent>
 	<groupId>de.tse</groupId>
 	<artifactId>predictivegrowth</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.1.0-SNAPSHOT</version>
 	<name>predictivegrowth</name>
-	<description>Predicitve Growth</description>
+	<description>Predicitve Growth - deep learning for stock data.</description>
 
 	<properties>
-		<java.version>15</java.version>
+		<java.version>11</java.version>
 	</properties>
 
 	<dependencies>
@@ -23,22 +23,21 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
 			<optional>true</optional>
 		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.liquibase</groupId>
-			<artifactId>liquibase-core</artifactId>
 		</dependency>
 
 		<dependency>
@@ -48,15 +47,53 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.squareup.retrofit2</groupId>
-			<artifactId>converter-gson</artifactId>
-			<version>2.9.0</version>
+			<groupId>ai.djl.spring</groupId>
+			<artifactId>djl-spring-boot-starter-pytorch-auto</artifactId>
+			<version>0.7</version>
+		</dependency>
+
+
+		<!--		<dependency>
+                    <groupId>ai.djl.spring</groupId>
+                    <artifactId>djl-spring-boot-starter-autoconfigure</artifactId>
+                    <version>0.7</version>
+                </dependency>-->
+
+		<!--		<dependency>
+                    <groupId>ai.djl.tensorflow</groupId>
+                    <artifactId>tensorflow-api</artifactId>
+                    <version>0.8.0</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>ai.djl.tensorflow</groupId>
+                    <artifactId>tensorflow-engine</artifactId>
+                    <version>0.8.0</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>ai.djl.tensorflow</groupId>
+                    <artifactId>tensorflow-native-auto</artifactId>
+                    <version>2.2.0</version>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>ai.djl</groupId>
+                    <artifactId>api</artifactId>
+                    <version>0.8.0</version>
+                </dependency>-->
+
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>5.6.0</version>
 		</dependency>
 
 		<dependency>
-			<groupId>org.tensorflow</groupId>
-			<artifactId>tensorflow</artifactId>
-			<version>1.15.0</version>
+			<groupId>com.squareup.retrofit2</groupId>
+			<artifactId>converter-jackson</artifactId>
+			<version>2.9.0</version>
 		</dependency>
 
 		<dependency>
@@ -78,21 +115,15 @@
 		</dependency>
 
 		<dependency>
-			<groupId>ai.djl</groupId>
-			<artifactId>api</artifactId>
-			<version>0.8.0</version>
-		</dependency>
-
-		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.11</version>
 		</dependency>
 
 		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>2.9.2</version>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>1.5.0</version>
 		</dependency>
 
 		<dependency>
@@ -106,6 +137,19 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>42.2.18</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.8.0</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -118,8 +162,8 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>14</source>
-					<target>14</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 		</plugins>

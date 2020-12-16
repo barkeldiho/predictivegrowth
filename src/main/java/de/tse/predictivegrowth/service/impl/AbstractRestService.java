@@ -1,14 +1,11 @@
 package de.tse.predictivegrowth.service.impl;
 
-import com.google.gson.FieldNamingPolicy;
-import com.google.gson.GsonBuilder;
-import lombok.Setter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import org.springframework.beans.factory.annotation.Value;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.jackson.JacksonConverterFactory;
 
 import java.util.concurrent.TimeUnit;
 
@@ -22,29 +19,18 @@ public abstract class AbstractRestService<T> {
 
     private static final int TIMEOUT_DURATION = 60;
 
-    private final GsonConverterFactory gsonConverterFactory;
+    private final JacksonConverterFactory jacksonConverterFactory;
 
     private final Class<T> type;
 
-    @Setter
-    String baseUrl;
-
-    @Value("${data_service.auth.username}")
-    private String username;
-
-    @Value("${data_service.auth.password}")
-    private String password;
+    private String baseUrl;
 
     private T restInterface;
 
-    public AbstractRestService(final Class<T> type) {
+    public AbstractRestService(final Class<T> type, final ObjectMapper objectMapper) {
         this.type = type;
-
-        final GsonBuilder gson = new GsonBuilder();
-        gson.setFieldNamingPolicy(FieldNamingPolicy.IDENTITY);
-        this.gsonConverterFactory = GsonConverterFactory.create(gson.create());
+        this.jacksonConverterFactory = JacksonConverterFactory.create(objectMapper);
     }
-
 
     /**
      * Gets the REST interface for the current context. The base URL is handed over to ensure
@@ -74,7 +60,7 @@ public abstract class AbstractRestService<T> {
 
                 final Retrofit gateway = new Retrofit.Builder()
                         .baseUrl(baseUrl)
-                        .addConverterFactory(this.gsonConverterFactory)
+                        .addConverterFactory(this.jacksonConverterFactory)
                         .client(clientBuilder.build())
                         .build();
 
