@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Builder
@@ -19,11 +20,11 @@ public class TrainingModel {
         this.instanceName = trainingModelEntity.getInstanceName();
         this.layerUnits = trainingModelEntity.getLayerUnits();
         this.status = trainingModelEntity.getStatus();
-        this.historyId = trainingModelEntity.getHistoryId();
         this.modelFile = trainingModelEntity.getModelFile();
+        this.historyId = trainingModelEntity.getHistoryId();
     }
 
-    private List<Integer> layerUnits;
+    private List<Integer> layerUnits = new ArrayList<>();
 
     private Integer inputLayer;
 
@@ -31,7 +32,7 @@ public class TrainingModel {
 
     private Integer status;
 
-    private Long historyId;
-
     private byte[] modelFile;
+
+    private Long historyId;
 }

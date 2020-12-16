@@ -39,30 +39,21 @@ public class StockHistoryEntity {
 
     private String companyName;
 
-    @OneToMany(mappedBy = "history", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "historyId")
     private final List<StockDayDataEntity> stockDataDayList = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "historyId")
     private final List<TrainingModelEntity> trainingModelEntityList = new ArrayList<>();
 
-    public void addStockDataEntity(final StockDayDataEntity stockDayDataEntity) {
+    private void addStockDataEntity(final StockDayDataEntity stockDayDataEntity) {
         this.stockDataDayList.add(stockDayDataEntity);
-        stockDayDataEntity.setHistory(this);
+        stockDayDataEntity.setHistoryId(this.getId());
     }
 
-    public void removeStockDataEntity(final StockDayDataEntity stockDayDataEntity) {
-        this.stockDataDayList.remove(stockDayDataEntity);
-        stockDayDataEntity.setHistory(null);
-    }
-
-    public void addTrainingModelEntity(final TrainingModelEntity trainingModelEntity) {
+    private void addTrainingModelEntity(final TrainingModelEntity trainingModelEntity) {
         this.trainingModelEntityList.add(trainingModelEntity);
         trainingModelEntity.setHistoryId(this.getId());
-    }
-
-    public void removeTrainingModelEntity(final TrainingModelEntity trainingModelEntity) {
-        this.trainingModelEntityList.remove(trainingModelEntity);
-        trainingModelEntity.setHistoryId(null);
     }
 }

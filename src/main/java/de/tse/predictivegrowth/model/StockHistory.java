@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class StockHistory {
 
     private String companyName;
 
-    private List<StockDayData> stockDayDataList;
+    private List<StockDayData> stockDayDataList = new ArrayList<>();
 
-    private List<TrainingModel> trainingModelList;
+    private List<TrainingModel> trainingModelList = new ArrayList<>();
 }

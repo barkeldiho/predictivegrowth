@@ -25,8 +25,7 @@ public class StockDayDataEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private StockHistoryEntity history;
+    private Long historyId;
 
     private LocalDate localDate;
 

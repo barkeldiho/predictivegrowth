@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -60,7 +59,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         final List<StockDayData> preparedData = this.stockDataPreparationService.fullyPrepare(stockHistory.getStockDayDataList());
 
         final Model trainedDeepJavaModel = this.trainDeepJavaModel(instanceName, preparedData);
-        final byte[] modelFile = this.getModelFileAsByteArray(instanceName, trainedDeepJavaModel, stockHistory);
+        final byte[] modelFile = this.getModelFileAsByteArray(instanceName, trainedDeepJavaModel, stockHistory.getStockIdentifier());
 
         final TrainingModel trainingModel = TrainingModel.builder()
                 .inputLayer(35)
@@ -117,12 +116,12 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         return trainingModel;
     }
 
-    private byte[] getModelFileAsByteArray(final String instanceName, final Model trainingModel, final StockHistory stockHistory) {
+    private byte[] getModelFileAsByteArray(final String instanceName, final Model trainingModel, final String stockIdentifier) {
         try {
             Path modelDir = Paths.get(MLP_DIRECTORY);
 
             Files.createDirectories(modelDir);
-            trainingModel.setProperty("Stock", stockHistory.getStockIdentifier());
+            trainingModel.setProperty("Stock", stockIdentifier);
             trainingModel.save(modelDir, instanceName);
 
             final Optional<Path> filePath = Files.walk(Paths.get(MLP_DIRECTORY))

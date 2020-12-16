@@ -23,8 +23,6 @@ public class TrainingModelServiceImpl implements TrainingModelService {
 
     private final @NonNull TrainingModelDao trainingModelDao;
 
-    private final @NonNull StockDataService stockDataService;
-
     @Override
     public Set<TrainingModel> findTrainingModelsForStockId(final Long stockId) {
         return this.trainingModelDao.findTrainingModelEntitiesByHistoryId(stockId).stream()
