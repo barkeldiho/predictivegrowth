@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
 import java.util.Set;
 
 @Slf4j
@@ -25,8 +28,9 @@ public class DeepJavaController {
 
     @PostMapping(path = "/{stockId}")
     @ResponseStatus( code = HttpStatus.OK)
-    public void trainAndSaveMlpForStockId(@PathVariable final Long stockId, @RequestParam final String instanceName) {
-        this.deepJavaService.trainAndSaveMlpForStockId(instanceName, stockId);
+    public void trainAndSaveMlpForStockId(@PathVariable final Long stockId, @RequestParam final String instanceName,
+                                          @RequestParam @DecimalMax("1.0") @DecimalMin("0.0") final Double trainingSetSize) {
+        this.deepJavaService.trainAndSaveMlpForStockId(instanceName, stockId, trainingSetSize);
     }
 
     @GetMapping(path = "/{stockId}")

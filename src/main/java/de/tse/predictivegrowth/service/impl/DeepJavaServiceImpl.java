@@ -15,7 +15,7 @@ import ai.djl.training.evaluator.Accuracy;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
 import de.tse.predictivegrowth.dataset.StockDataset;
-import de.tse.predictivegrowth.model.StockDayData;
+import de.tse.predictivegrowth.model.InOutData;
 import de.tse.predictivegrowth.model.StockHistory;
 import de.tse.predictivegrowth.model.TrainingModel;
 import de.tse.predictivegrowth.service.api.DeepJavaService;
@@ -33,9 +33,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -54,11 +54,16 @@ public class DeepJavaServiceImpl implements DeepJavaService {
 
     @Override
     @Transactional
-    public void trainAndSaveMlpForStockId(final String instanceName, final Long stockId) {
+    public void trainAndSaveMlpForStockId(final String instanceName, final Long stockId, final Double trainingSetSize) {
         final StockHistory stockHistory = this.stockDataService.getStockHistory(stockId);
-        final List<StockDayData> preparedData = this.stockDataPreparationService.fullyPrepare(stockHistory.getStockDayDataList());
+        final InOutData inOutData = this.stockDataPreparationService.fullyPrepare(stockHistory.getStockDayDataList(), trainingSetSize);
 
-        final Model trainedDeepJavaModel = this.trainDeepJavaModel(instanceName, preparedData);
+        final Dataset dataset = StockDataset.builder()
+                .setSampling(16, true)
+                .setData(inOutData)
+                .build();
+
+        final Model trainedDeepJavaModel = this.trainDeepJavaModel(instanceName, dataset);
         final byte[] modelFile = this.getModelFileAsByteArray(instanceName, trainedDeepJavaModel, stockHistory.getStockIdentifier());
 
         final TrainingModel trainingModel = TrainingModel.builder()
@@ -73,10 +78,10 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         this.trainingModelService.saveTrainingModel(trainingModel);
     }
 
-    private Model trainDeepJavaModel(final String instanceName, final List<StockDayData> stockDayDataList) {
+    private Model trainDeepJavaModel(final String instanceName, final Dataset dataset) {
         // Ref.: The Application of Stock Index Price Prediction with Neural Network (file:///C:/Users/tse/Downloads/mca-25-00053.pdf)
         final SequentialBlock block = new SequentialBlock();
-        block.add(Blocks.batchFlattenBlock(1)); // Rule-of-thumb: half input of first layer
+        block.add(Blocks.batchFlattenBlock(35)); // Rule-of-thumb: half input of first layer
         block.add(Linear.builder().setUnits(70).build());
         block.add(Activation::relu);
         block.add(Linear.builder().setUnits(28).build());
@@ -90,10 +95,6 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         final Model trainingModel = Model.newInstance(instanceName);
         trainingModel.setBlock(block);
 
-        final Dataset dataset = StockDataset.builder()
-                .setSampling(35, false)
-                .setData(stockDayDataList)
-                .build();
         final Trainer trainer = this.getConfiguredTrainer(trainingModel);
 
         // Deep learning is typically trained in epochs where each epoch trains the model on each item in the dataset once.
@@ -113,6 +114,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         }
 
         trainingModel.setProperty("Epoch", String.valueOf(epoch));
+        trainingModel.setProperty("Timestamp", ZonedDateTime.now().toString());
         return trainingModel;
     }
 

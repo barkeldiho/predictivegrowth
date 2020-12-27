@@ -6,32 +6,36 @@ import ai.djl.ndarray.NDManager;
 import ai.djl.training.dataset.RandomAccessDataset;
 import ai.djl.training.dataset.Record;
 import ai.djl.util.Progress;
-import de.tse.predictivegrowth.model.StockDayData;
+import de.tse.predictivegrowth.model.InOutData;
 import lombok.NoArgsConstructor;
-
-import java.util.List;
 
 public class StockDataset extends RandomAccessDataset {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final List<StockDayData> stockDayDataList;
+    private final InOutData inOutData;
 
     private StockDataset(Builder builder) {
         super(builder);
-        this.stockDayDataList = builder.stockDayDataList;
+        this.inOutData = builder.inOutData;
     }
 
     @Override
     public Record get(NDManager manager, long index) {
-        StockDayData record = this.stockDayDataList.get(Math.toIntExact(index));
-        final NDArray value = manager.create(record.getPriceMean().floatValue());
-        final NDArray label = manager.create(record.getLocalDate().toEpochDay());
-        return new Record(new NDList(value), new NDList(label));
+        NDList value = new NDList();
+        NDList label = new NDList();
+        final NDArray valueArray = this.inOutData.getInputs().get(Math.toIntExact(index));
+        final NDArray labelArray = this.inOutData.getLabels().get(Math.toIntExact(index));
+        value.add(valueArray);
+        label.add(labelArray);
+        value.attach(manager);
+        label.attach(manager);
+        return new Record(value, label);
     }
+    // final NDArray inputs = this.ndManager.create(meanDataArrayInputs).reshape(new Shape(setSize, seriesSize));
 
     @Override
     public long availableSize() {
-        return this.stockDayDataList.size();
+        return this.inOutData.getInputs().size(0);
     }
 
     @Override
@@ -44,15 +48,15 @@ public class StockDataset extends RandomAccessDataset {
     @NoArgsConstructor
     public static final class Builder extends BaseBuilder<Builder> {
 
-        private List<StockDayData> stockDayDataList;
+        private InOutData inOutData;
 
         @Override
         protected Builder self() {
             return this;
         }
 
-        public Builder setData(final List<StockDayData> stockDayDataList) {
-            this.stockDayDataList = stockDayDataList;
+        public Builder setData(final InOutData inOutData) {
+            this.inOutData = inOutData;
             return this;
         }
 
