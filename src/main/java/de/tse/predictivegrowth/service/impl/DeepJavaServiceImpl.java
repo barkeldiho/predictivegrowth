@@ -3,6 +3,7 @@ package de.tse.predictivegrowth.service.impl;
 import ai.djl.Model;
 import ai.djl.ndarray.types.Shape;
 import ai.djl.nn.Activation;
+import ai.djl.nn.Block;
 import ai.djl.nn.Blocks;
 import ai.djl.nn.SequentialBlock;
 import ai.djl.nn.core.Linear;
@@ -15,7 +16,9 @@ import ai.djl.training.evaluator.Accuracy;
 import ai.djl.training.listener.TrainingListener;
 import ai.djl.training.loss.Loss;
 import de.tse.predictivegrowth.dataset.StockDataset;
+import de.tse.predictivegrowth.enumeration.TrainingStatus;
 import de.tse.predictivegrowth.model.InOutData;
+import de.tse.predictivegrowth.model.NormalizationData;
 import de.tse.predictivegrowth.model.StockHistory;
 import de.tse.predictivegrowth.model.TrainingModel;
 import de.tse.predictivegrowth.service.api.DeepJavaService;
@@ -25,6 +28,7 @@ import de.tse.predictivegrowth.service.api.TrainingModelService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,8 +38,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Service
@@ -54,48 +56,34 @@ public class DeepJavaServiceImpl implements DeepJavaService {
 
     @Override
     @Transactional
-    public void trainAndSaveMlpForStockId(final String instanceName, final Long stockId, final Double trainingSetSize) {
-        final StockHistory stockHistory = this.stockDataService.getStockHistory(stockId);
-        final InOutData inOutData = this.stockDataPreparationService.fullyPrepare(stockHistory.getStockDayDataList(), trainingSetSize);
+    public void trainAndSaveMlpForModel(final Long modelId) {
+        final TrainingModel trainingModel = this.trainingModelService.getTrainingModelById(modelId);
+        final StockHistory stockHistory = this.stockDataService.getStockHistoryById(trainingModel.getHistoryId());
+        final Pair<InOutData, NormalizationData> prepareReturn = this.stockDataPreparationService.fullyPrepare(stockHistory.getStockDayDataList(),
+                trainingModel.getTrainingIntStart(), trainingModel.getTrainingIntEnd());
 
+        // Prepare dataset
         final Dataset dataset = StockDataset.builder()
                 .setSampling(16, true)
-                .setData(inOutData)
+                .setData(prepareReturn.getValue0())
                 .build();
 
-        final Model trainedDeepJavaModel = this.trainDeepJavaModel(instanceName, dataset);
-        final byte[] modelFile = this.getModelFileAsByteArray(instanceName, trainedDeepJavaModel, stockHistory.getStockIdentifier());
+        // Train DJL model
+        final Model trainedDeepJavaModel = this.trainDeepJavaModel(trainingModel, dataset);
+        final byte[] modelFile = this.getModelFileAsByteArray(trainingModel.getInstanceName(), trainedDeepJavaModel, stockHistory.getStockIdentifier());
 
-        final TrainingModel trainingModel = TrainingModel.builder()
-                .inputLayer(35)
-                .layerUnits(new ArrayList<>(Arrays. asList(70, 28, 14, 7, 1)))
-                .instanceName(instanceName)
-                .historyId(stockId)
-                .modelFile(modelFile)
-                .status(2) // 1: IN PROGRESS, 2: SUCCESS, 3: FAILED
-                .build();
-
+        // Update trainingModel
+        trainingModel.setStatus(TrainingStatus.SUCCESS);
+        trainingModel.setModelFile(modelFile);
+        trainingModel.setTrainingIntMin(prepareReturn.getValue1().getTrainingIntMin());
+        trainingModel.setTrainingIntMax(prepareReturn.getValue1().getTrainingIntMax());
         this.trainingModelService.saveTrainingModel(trainingModel);
     }
 
-    private Model trainDeepJavaModel(final String instanceName, final Dataset dataset) {
-        // Ref.: The Application of Stock Index Price Prediction with Neural Network (file:///C:/Users/tse/Downloads/mca-25-00053.pdf)
-        final SequentialBlock block = new SequentialBlock();
-        block.add(Blocks.batchFlattenBlock(35)); // Rule-of-thumb: half input of first layer
-        block.add(Linear.builder().setUnits(70).build());
-        block.add(Activation::relu);
-        block.add(Linear.builder().setUnits(28).build());
-        block.add(Activation::relu);
-        block.add(Linear.builder().setUnits(14).build());
-        block.add(Activation::relu);
-        block.add(Linear.builder().setUnits(7).build());
-        block.add(Activation::relu);
-        block.add(Linear.builder().setUnits(1).build());
-
-        final Model trainingModel = Model.newInstance(instanceName);
-        trainingModel.setBlock(block);
-
-        final Trainer trainer = this.getConfiguredTrainer(trainingModel);
+    private Model trainDeepJavaModel(final TrainingModel trainingModel, final Dataset dataset) {
+        final Model model = Model.newInstance(trainingModel.getInstanceName());
+        model.setBlock(this.getMlpBlockForTrainingModel(trainingModel));
+        final Trainer trainer = this.getConfiguredTrainer(model);
 
         // Deep learning is typically trained in epochs where each epoch trains the model on each item in the dataset once.
         int epoch = 5;
@@ -113,9 +101,23 @@ public class DeepJavaServiceImpl implements DeepJavaService {
             trainer.notifyListeners(listener -> listener.onEpoch(trainer));
         }
 
-        trainingModel.setProperty("Epoch", String.valueOf(epoch));
-        trainingModel.setProperty("Timestamp", ZonedDateTime.now().toString());
-        return trainingModel;
+        model.setProperty("Epoch", String.valueOf(epoch));
+        model.setProperty("Timestamp", ZonedDateTime.now().toString());
+        return model;
+    }
+
+    private Block getMlpBlockForTrainingModel(final TrainingModel trainingModel) {
+        // Ref.: The Application of Stock Index Price Prediction with Neural Network (file:///C:/Users/tse/Downloads/mca-25-00053.pdf)
+        final SequentialBlock block = new SequentialBlock();
+        block.add(Blocks.batchFlattenBlock(trainingModel.getInputLayer())); // Rule-of-thumb: half input of first layer
+
+        for (int i = 0; i < trainingModel.getLayerUnits().size(); i++) {
+            block.add(Linear.builder().setUnits(trainingModel.getLayerUnits().get(i)).build());
+            block.add(Activation::relu);
+        }
+        block.add(Linear.builder().setUnits(trainingModel.getOutputLayer()).build());
+
+        return block;
     }
 
     private byte[] getModelFileAsByteArray(final String instanceName, final Model trainingModel, final String stockIdentifier) {

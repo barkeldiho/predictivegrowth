@@ -3,7 +3,6 @@ package de.tse.predictivegrowth.service.impl;
 import de.tse.predictivegrowth.dao.db.TrainingModelDao;
 import de.tse.predictivegrowth.entity.db.TrainingModelEntity;
 import de.tse.predictivegrowth.model.TrainingModel;
-import de.tse.predictivegrowth.service.api.StockDataService;
 import de.tse.predictivegrowth.service.api.TrainingModelService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +23,13 @@ public class TrainingModelServiceImpl implements TrainingModelService {
     private final @NonNull TrainingModelDao trainingModelDao;
 
     @Override
+    public TrainingModel getTrainingModelById(final Long id) {
+        return this.trainingModelDao.findById(id)
+                .map(TrainingModel::new)
+                .orElseThrow(() -> new RuntimeException("No such training model."));
+    }
+
+    @Override
     public Set<TrainingModel> findTrainingModelsForStockId(final Long stockId) {
         return this.trainingModelDao.findTrainingModelEntitiesByHistoryId(stockId).stream()
                 .map(TrainingModel::new)
@@ -35,5 +41,11 @@ public class TrainingModelServiceImpl implements TrainingModelService {
     public TrainingModel saveTrainingModel(final TrainingModel trainingModel) {
         final TrainingModelEntity trainingModelEntity = this.trainingModelDao.save(new TrainingModelEntity(trainingModel));
         return new TrainingModel(trainingModelEntity);
+    }
+
+    @Override
+    @Transactional
+    public void deleteTrainingModel(final Long id) {
+        this.trainingModelDao.deleteById(id);
     }
 }

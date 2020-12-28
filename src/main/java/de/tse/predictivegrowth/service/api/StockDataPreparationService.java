@@ -1,11 +1,13 @@
 package de.tse.predictivegrowth.service.api;
 
 import de.tse.predictivegrowth.model.InOutData;
+import de.tse.predictivegrowth.model.NormalizationData;
 import de.tse.predictivegrowth.model.StockDayData;
+import org.javatuples.Pair;
 
 import java.util.List;
 
 public interface StockDataPreparationService {
 
-    InOutData fullyPrepare(final List<StockDayData> stockDayDataList, final Double trainingSetSize);
+    Pair<InOutData, NormalizationData> fullyPrepare(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd);
 }

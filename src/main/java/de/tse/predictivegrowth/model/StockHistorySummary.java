@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Builder
 @Getter
 @NoArgsConstructor
@@ -16,12 +18,14 @@ public class StockHistorySummary {
         this.stockIdentifier = entity.getStockIdentifier();
         this.companyName = entity.getCompanyName();
         this.id = entity.getId();
+        this.creationDate = entity.getCreationDate();
     }
 
     public StockHistorySummary(final StockHistory stockHistory) {
         this.stockIdentifier = stockHistory.getStockIdentifier();
         this.companyName = stockHistory.getCompanyName();
         this.id = stockHistory.getId();
+        this.creationDate = stockHistory.getCreationDate();
     }
 
     private Long id;
@@ -29,4 +33,6 @@ public class StockHistorySummary {
     private String stockIdentifier;
 
     private String companyName;
+
+    private LocalDate creationDate;
 }

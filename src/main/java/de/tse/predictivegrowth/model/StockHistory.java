@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,9 +25,12 @@ public class StockHistory {
         this.trainingModelList = entity.getTrainingModelEntityList().stream()
                 .map(TrainingModel::new).collect(Collectors.toList());
         this.id = entity.getId();
+        this.creationDate = entity.getCreationDate();
     }
 
     private Long id;
+
+    private LocalDate creationDate;
 
     private String stockIdentifier;
 

@@ -19,7 +19,7 @@ public interface StockDataService {
      * @param id
      * @return
      */
-    StockHistory getStockHistory(final Long id);
+    StockHistory getStockHistoryById(final Long id);
 
     /**
      *
@@ -34,4 +34,10 @@ public interface StockDataService {
          * @return
          */
     StockHistory saveStockHistory(final StockHistory stockHistory);
+
+    /**
+     *
+     * @param id
+     */
+    void deleteStockHistory(final Long id);
 }

@@ -3,8 +3,10 @@ package de.tse.predictivegrowth.entity.db;
 import de.tse.predictivegrowth.model.StockHistory;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +40,9 @@ public class StockHistoryEntity {
     private String stockIdentifier;
 
     private String companyName;
+
+    @CreationTimestamp
+    private LocalDate creationDate;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "historyId")

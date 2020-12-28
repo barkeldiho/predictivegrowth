@@ -4,10 +4,12 @@ import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDManager;
 import ai.djl.ndarray.types.Shape;
 import de.tse.predictivegrowth.model.InOutData;
+import de.tse.predictivegrowth.model.NormalizationData;
 import de.tse.predictivegrowth.model.StockDayData;
 import de.tse.predictivegrowth.service.api.StockDataPreparationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,17 +29,25 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
     private final NDManager ndManager = NDManager.newBaseManager();
 
     @Override
-    public InOutData fullyPrepare(final List<StockDayData> stockDayDataList, final Double trainingSetSize) {
-        final List<StockDayData> training = this.cutToTrainingSet(stockDayDataList, trainingSetSize);
+    public Pair<InOutData, NormalizationData> fullyPrepare(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
+        final List<StockDayData> training = this.cutToTrainingSet(stockDayDataList, trainingIntStart, trainingIntEnd);
         final List<StockDayData> locfList = this.locf(training);
         final List<StockDayData> normalized = this.normalize(locfList);
-        return this.getInOutData(normalized, 35);
+
+        final Double trainingIntMin = Collections.min(training.stream().map(StockDayData::getPriceMean).collect(Collectors.toSet()));
+        final Double trainingIntMax = Collections.max(training.stream().map(StockDayData::getPriceMean).collect(Collectors.toSet()));
+        final NormalizationData normalizationData = new NormalizationData(trainingIntMin, trainingIntMax);
+        return new Pair<>(this.getInOutData(normalized, 35), normalizationData);
     }
 
-    private List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Double trainingSetSize) {
-        final long trainingIndex = Math.round(stockDayDataList.size()*trainingSetSize);
+    private List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
+        if (stockDayDataList.size() > (trainingIntEnd | trainingIntStart)
+                || (trainingIntEnd | trainingIntStart) < 0
+                || trainingIntEnd < trainingIntStart) {
+            throw new RuntimeException("Training interval incorrect.");
+        }
         final List<StockDayData> trainingSet = new ArrayList<>();
-        for (int i = 0; i<trainingIndex; i++) {
+        for (int i = trainingIntStart.intValue(); i < trainingIntEnd.intValue(); i++) {
             trainingSet.add(stockDayDataList.get(i));
         }
 

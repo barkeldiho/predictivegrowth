@@ -37,7 +37,8 @@ public class StockDataServiceImpl implements StockDataService {
             .collect(Collectors.toList());
     }
 
-    public StockHistory getStockHistory(final Long id) {
+    @Override
+    public StockHistory getStockHistoryById(final Long id) {
         return this.stockHistoryDao.findById(id)
                 .map(StockHistory::new)
                 .orElseThrow(() -> new RuntimeException(String.format("Could not find StockHistory for id = %d.", id)));
@@ -66,5 +67,11 @@ public class StockDataServiceImpl implements StockDataService {
     public StockHistory saveStockHistory(final StockHistory stockHistory) {
          final StockHistoryEntity entity = this.stockHistoryDao.save(new StockHistoryEntity(stockHistory));
          return new StockHistory(entity);
+    }
+
+    @Override
+    @Transactional
+    public void deleteStockHistory(final Long id) {
+        this.stockHistoryDao.deleteById(id);
     }
 }
