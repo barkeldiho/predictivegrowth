@@ -17,7 +17,7 @@ import java.util.Set;
 @RestController
 @RequestMapping(TrainingModelController.TRAINING_MODELS_PATH)
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@Tag(name = "DeepJava", description = "Endpoint to control deep learning models and analysis.")
+@Tag(name = "TrainingModel", description = "Endpoint to control training models.")
 public class TrainingModelController {
 
     public static final String TRAINING_MODELS_PATH = "/v1/training-models";
