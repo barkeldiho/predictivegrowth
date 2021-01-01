@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Slf4j
 @RestController
 @RequestMapping(DeepJavaController.DL_PATH)
@@ -22,9 +24,16 @@ public class DeepJavaController {
 
     @Operation(summary = "Method uses a training model to create an anctual DJL model.",
             description = "Method uses a training model and its properties to train a DJL model which is then saved as model file for the training model.")
-    @PostMapping(path = "/{modelId}")
+    @PostMapping(path = "/{modelId}/train")
     @ResponseStatus(code = HttpStatus.CREATED)
     public void trainAndSaveMlpForModel(@PathVariable final Long modelId) {
         this.deepJavaService.trainAndSaveMlpForModel(modelId);
+    }
+
+    @Operation(summary = "Method uses a training model to create an anctual DJL model.",
+            description = "Method uses a training model and its properties to train a DJL model which is then saved as model file for the training model.")
+    @GetMapping(path = "/{modelId}/predict/{outputCount}")
+    public List<Double> getRollingPredictionForModel(@PathVariable final Long modelId, @PathVariable final Integer outputCount) {
+        return this.deepJavaService.getRollingPredictionForModel(modelId, outputCount);
     }
 }

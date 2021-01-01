@@ -29,7 +29,8 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
     private final NDManager ndManager = NDManager.newBaseManager();
 
     @Override
-    public Pair<InOutData, NormalizationData> fullyPrepare(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
+    public Pair<InOutData, NormalizationData> fullyPrepare(final List<StockDayData> stockDayDataList, final Integer seriesSize,
+                                                           final Long trainingIntStart, final Long trainingIntEnd) {
         final List<StockDayData> training = this.cutToTrainingSet(stockDayDataList, trainingIntStart, trainingIntEnd);
         final List<StockDayData> locfList = this.locf(training);
         final List<StockDayData> normalized = this.normalize(locfList);
@@ -37,11 +38,11 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
         final Double trainingIntMin = Collections.min(training.stream().map(StockDayData::getPriceMean).collect(Collectors.toSet()));
         final Double trainingIntMax = Collections.max(training.stream().map(StockDayData::getPriceMean).collect(Collectors.toSet()));
         final NormalizationData normalizationData = new NormalizationData(trainingIntMin, trainingIntMax);
-        return new Pair<>(this.getInOutData(normalized, 35), normalizationData);
+        return new Pair<>(this.getInOutData(normalized, seriesSize), normalizationData);
     }
 
     private List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
-        if (stockDayDataList.size() > (trainingIntEnd | trainingIntStart)
+        if (stockDayDataList.size() < (trainingIntEnd | trainingIntStart)
                 || (trainingIntEnd | trainingIntStart) < 0
                 || trainingIntEnd < trainingIntStart) {
             throw new RuntimeException("Training interval incorrect.");

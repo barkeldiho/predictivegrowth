@@ -11,6 +11,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Builder
 @Getter
@@ -24,14 +25,17 @@ public class TrainingModel {
         this.instanceName = trainingModelEntity.getInstanceName();
         this.layerUnits = trainingModelEntity.getLayerUnits();
         this.status = trainingModelEntity.getStatus();
-        this.modelFile = trainingModelEntity.getModelFile();
+        this.modelFiles = trainingModelEntity.getModelFiles().stream().map(ModelFile::new).collect(Collectors.toList());
         this.historyId = trainingModelEntity.getHistoryId();
         this.trainingIntStart = trainingModelEntity.getTrainingIntStart();
         this.trainingIntEnd = trainingModelEntity.getTrainingIntEnd();
         this.trainingIntMax = trainingModelEntity.getTrainingIntMax();
         this.trainingIntMin = trainingModelEntity.getTrainingIntMin();
         this.outputLayer = trainingModelEntity.getOutputLayer();
+        this.id = trainingModelEntity.getId();
     }
+
+    private Long id;
 
     @NotEmpty
     private List<@Min(1) Integer> layerUnits = new ArrayList<>();
@@ -60,7 +64,7 @@ public class TrainingModel {
     private TrainingStatus status = TrainingStatus.NONE;
 
     @JsonIgnore
-    private byte[] modelFile;
+    private List<ModelFile> modelFiles = new ArrayList<>();
 
     @NotNull
     private Long historyId;

@@ -28,8 +28,8 @@ public class TrainingModelController {
             description = "Method saves a training model for a stock history.")
     @PostMapping
     @ResponseStatus(code = HttpStatus.CREATED)
-    public void saveTrainingModel(@Valid final TrainingModel trainingModel) {
-        this.trainingModelService.saveTrainingModel(trainingModel);
+    public Long saveTrainingModel(@Valid @RequestBody final TrainingModel trainingModel) {
+        return this.trainingModelService.saveTrainingModel(trainingModel).getId();
     }
 
     @Operation(summary = "Method finds all training models for a stock history id.",

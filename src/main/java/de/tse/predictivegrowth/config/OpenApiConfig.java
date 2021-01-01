@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
         info = @Info(
                 title = "Predictive Growth API",
                 version = "0.3.0",
-                description = "This app provides the backend for the predictive growth frontend."
+                description = "This app provides the technical functionalities for predictive growth."
                 )
         )
 @Configuration
