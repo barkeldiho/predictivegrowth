@@ -77,13 +77,13 @@ public class DeepJavaServiceImpl implements DeepJavaService {
 
         // Prepare dataset
         final Dataset dataset = StockDataset.builder()
-                .setSampling(16, true)
+                .setSampling(35, true)
                 .setData(prepareReturn.getValue0())
                 .build();
 
         // Train DJL model
-        final Model trainedDeepJavaModel = this.trainDeepJavaModel(trainingModel, dataset);
-        final List<ModelFile> modelFiles = this.getModelFilesAsByteArray(trainingModel.getInstanceName(), trainedDeepJavaModel, stockHistory.getStockIdentifier());
+        final Model trainedDeepJavaModel = this.trainDeepJavaModel(trainingModel, dataset, stockHistory.getStockIdentifier());
+        final List<ModelFile> modelFiles = this.getModelFilesAsByteArray(trainingModel.getInstanceName(), trainedDeepJavaModel);
         trainedDeepJavaModel.close();
 
         // Update trainingModel
@@ -119,6 +119,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
                 final Double value = resultList.get(0).getDouble(i);
                 finalResults.add(value);
             }
+            predictionModel.close();
             return finalResults;
         } catch (TranslateException e) {
             throw new RuntimeException("Error during value prediction.");
@@ -136,22 +137,23 @@ public class DeepJavaServiceImpl implements DeepJavaService {
 
             model = Model.newInstance(trainingModel.getInstanceName());
             final Path modelPath = Paths.get(stringPath);
-            model.load(modelPath);
-
-            for (final ModelFile modelFile : trainingModel.getModelFiles()) {
-                Files.delete(Paths.get(stringPath + trainingModel.getInstanceName() + modelFile.getFileEnding()));
+            try {
+                model.load(modelPath);
+            } finally {
+                for (final ModelFile modelFile : trainingModel.getModelFiles()) {
+                    Files.delete(Paths.get(stringPath + trainingModel.getInstanceName() + modelFile.getFileEnding()));
+                }
             }
-
         } catch (IOException | MalformedModelException e) {
             throw new RuntimeException("Error while loading model from file.");
         }
         return model;
     }
 
-    private Model trainDeepJavaModel(final TrainingModel trainingModel, final Dataset dataset) {
+    private Model trainDeepJavaModel(final TrainingModel trainingModel, final Dataset dataset, final String stockIdentifier) {
         final Model model = Model.newInstance(trainingModel.getInstanceName());
         model.setBlock(this.getMlpBlockForTrainingModel(trainingModel));
-        final Trainer trainer = this.getConfiguredTrainer(model);
+        final Trainer trainer = this.getConfiguredTrainer(model, trainingModel);
 
         // Deep learning is typically trained in epochs where each epoch trains the model on each item in the dataset once.
         int epoch = 5;
@@ -165,10 +167,11 @@ public class DeepJavaServiceImpl implements DeepJavaService {
             } catch (Exception e) {
                 throw new RuntimeException("Error during model training in epoch.");
             }
-            // Call the end epoch event for the training listeners now that we are done
+            // Call the end epoch event for the training listeners
             trainer.notifyListeners(listener -> listener.onEpoch(trainer));
         }
 
+        model.setProperty("Stock", stockIdentifier);
         model.setProperty("Epoch", String.valueOf(epoch));
         model.setProperty("Timestamp", ZonedDateTime.now().toString());
         return model;
@@ -188,14 +191,12 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         return block;
     }
 
-    private List<ModelFile> getModelFilesAsByteArray(final String instanceName,final Model trainedModel, final String stockIdentifier) {
+    private List<ModelFile> getModelFilesAsByteArray(final String instanceName,final Model model) {
         try {
             final Path modelDir = Paths.get(MLP_DIRECTORY + "/" + RandomStringUtils.randomAlphanumeric(5));
 
             Files.createDirectories(modelDir);
-
-            trainedModel.setProperty("Stock", stockIdentifier);
-            trainedModel.save(modelDir, instanceName);
+            model.save(modelDir, instanceName);
 
             final List<Path> filePaths = Files.walk(modelDir)
                     .filter(entry -> entry.toString().contains(instanceName))
@@ -216,7 +217,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         }
     }
 
-    private Trainer getConfiguredTrainer(final Model model) {
+    private Trainer getConfiguredTrainer(final Model model, final TrainingModel trainingModel) {
         // L1Loss ref.: https://afteracademy.com/blog/what-are-l1-and-l2-loss-functions
         // L2lossfunction according to paper cited above
         final DefaultTrainingConfig config = new DefaultTrainingConfig(Loss.l2Loss())
@@ -224,7 +225,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
                 .addTrainingListeners(TrainingListener.Defaults.logging());
 
         Trainer trainer = model.newTrainer(config);
-        trainer.initialize(new Shape(1, 35));
+        trainer.initialize(new Shape(1, trainingModel.getInputLayer()));
 
         return trainer;
     }
