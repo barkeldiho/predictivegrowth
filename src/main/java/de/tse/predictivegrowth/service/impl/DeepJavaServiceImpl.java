@@ -77,7 +77,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
 
         // Prepare dataset
         final Dataset dataset = StockDataset.builder()
-                .setSampling(35, true)
+                .setSampling(16, false)
                 .setData(prepareReturn.getValue0())
                 .build();
 
@@ -194,8 +194,6 @@ public class DeepJavaServiceImpl implements DeepJavaService {
     private List<ModelFile> getModelFilesAsByteArray(final String instanceName,final Model model) {
         try {
             final Path modelDir = Paths.get(MLP_DIRECTORY + "/" + RandomStringUtils.randomAlphanumeric(5));
-
-            Files.createDirectories(modelDir);
             model.save(modelDir, instanceName);
 
             final List<Path> filePaths = Files.walk(modelDir)
