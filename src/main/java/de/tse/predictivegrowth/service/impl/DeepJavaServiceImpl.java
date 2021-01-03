@@ -29,6 +29,7 @@ import de.tse.predictivegrowth.service.api.DeepJavaService;
 import de.tse.predictivegrowth.service.api.StockDataPreparationService;
 import de.tse.predictivegrowth.service.api.StockDataService;
 import de.tse.predictivegrowth.service.api.TrainingModelService;
+import de.tse.predictivegrowth.util.DataProcessUtil;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -114,21 +115,11 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         for (int i = 0; i < outputCount; i++) {
             final Double predictedValue = this.getPredictionValueForInputs(predictionModel, predictionValues, trainingModel.getInputLayer());
             resultList.add(predictedValue);
-            predictionValues = this.shiftArrayContentLeft(predictionValues);
+            predictionValues = DataProcessUtil.shiftArrayContentLeft(predictionValues);
             predictionValues[trainingModel.getInputLayer()-1] = predictedValue.floatValue();
         }
         predictionModel.close();
         return resultList;
-    }
-
-    private float[] shiftArrayContentLeft(float[] nums) {
-        if (nums == null || nums.length <= 1) {
-            return nums;
-        }
-        float start = nums[0];
-        System.arraycopy(nums, 1, nums, 0, nums.length - 1);
-        nums[nums.length - 1] = start;
-        return nums;
     }
 
     private Double getPredictionValueForInputs(final Model predictionModel, final float[] predictionValues, final int inputSize) {
