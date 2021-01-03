@@ -117,6 +117,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
             predictionValues = this.shiftArrayContentLeft(predictionValues);
             predictionValues[trainingModel.getInputLayer()-1] = predictedValue.floatValue();
         }
+        predictionModel.close();
         return resultList;
     }
 
@@ -137,10 +138,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         final Predictor<NDList, NDList> predictor = predictionModel.newPredictor(new NoopTranslator());
         try {
             final NDList resultList = predictor.predict(new NDList(predictionInputs));
-            final Double value = resultList.get(0).getDouble(0);
-
-            predictionModel.close();
-            return value;
+            return (Double) (double) resultList.get(0).getFloat(0);
         } catch (TranslateException e) {
             throw new RuntimeException("Error during value prediction.");
         }
