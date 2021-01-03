@@ -26,7 +26,7 @@ public class ModelFileEntity {
     private Long id;
 
     private Long modelId;
-
+    
     private String fileEnding;
 
     private byte[] fileData;

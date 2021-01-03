@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.javatuples.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -101,26 +102,45 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         final List<StockDayData> stockDayDataList = stockHistory.getStockDayDataList();
         final Model predictionModel = this.loadPredictionModel(trainingModel);
 
-        // Prepare prediction inputs
-        final float[] predictionValues = new float[trainingModel.getInputLayer()];
+        // Prepare initial prediction inputs
+        float[] predictionValues = new float[trainingModel.getInputLayer()];
         int index = stockDayDataList.size() - trainingModel.getInputLayer();
         for (int i = 0; i < trainingModel.getInputLayer(); i++) {
             predictionValues[i] = stockDayDataList.get(index).getPriceMean().floatValue();
             index++;
         }
-        final NDArray predictionInputs = this.ndManager.create(predictionValues).reshape(new Shape(1, trainingModel.getInputLayer()));
+
+        final List<Double> resultList = new ArrayList<>();
+        for (int i = 0; i < outputCount; i++) {
+            final Double predictedValue = this.getPredictionValueForInputs(predictionModel, predictionValues, trainingModel.getInputLayer());
+            resultList.add(predictedValue);
+            predictionValues = this.shiftArrayContentLeft(predictionValues);
+            predictionValues[trainingModel.getInputLayer()-1] = predictedValue.floatValue();
+        }
+        return resultList;
+    }
+
+    private float[] shiftArrayContentLeft(float[] nums) {
+        if (nums == null || nums.length <= 1) {
+            return nums;
+        }
+        float start = nums[0];
+        System.arraycopy(nums, 1, nums, 0, nums.length - 1);
+        nums[nums.length - 1] = start;
+        return nums;
+    }
+
+    private Double getPredictionValueForInputs(final Model predictionModel, final float[] predictionValues, final int inputSize) {
+        final NDArray predictionInputs = this.ndManager.create(predictionValues).reshape(new Shape(1, inputSize));
 
         // Predict & Return
         final Predictor<NDList, NDList> predictor = predictionModel.newPredictor(new NoopTranslator());
         try {
-            final List<Double> finalResults = new ArrayList<>();
             final NDList resultList = predictor.predict(new NDList(predictionInputs));
-            for (int i = 0; i < trainingModel.getInputLayer(); i++) {
-                final Double value = resultList.get(0).getDouble(i);
-                finalResults.add(value);
-            }
+            final Double value = resultList.get(0).getDouble(0);
+
             predictionModel.close();
-            return finalResults;
+            return value;
         } catch (TranslateException e) {
             throw new RuntimeException("Error during value prediction.");
         }
@@ -129,19 +149,23 @@ public class DeepJavaServiceImpl implements DeepJavaService {
     private Model loadPredictionModel(final TrainingModel trainingModel) {
         Model model = null;
         try {
-            final String stringPath = MLP_DIRECTORY + "/" + RandomStringUtils.randomAlphanumeric(5) + "/";
+            final String stringPath = MLP_DIRECTORY + "/" + RandomStringUtils.randomAlphanumeric(5);
+            final String fileName = trainingModel.getInstanceName() + "-" +
+                    StringUtils.leftPad(trainingModel.getEpochs().toString(), 4, "0");
+
             for (final ModelFile modelFile : trainingModel.getModelFiles()) {
-                FileUtils.writeByteArrayToFile(new File(stringPath + trainingModel.getInstanceName() + modelFile.getFileEnding()),
+                FileUtils.writeByteArrayToFile(new File(stringPath + "/" + fileName + modelFile.getFileEnding()),
                         modelFile.getFileData());
             }
 
             model = Model.newInstance(trainingModel.getInstanceName());
+            model.setBlock(this.getMlpBlockForTrainingModel(trainingModel));
             final Path modelPath = Paths.get(stringPath);
             try {
                 model.load(modelPath);
             } finally {
                 for (final ModelFile modelFile : trainingModel.getModelFiles()) {
-                    Files.delete(Paths.get(stringPath + trainingModel.getInstanceName() + modelFile.getFileEnding()));
+                    Files.delete(Paths.get(stringPath + "/" + fileName + modelFile.getFileEnding()));
                 }
             }
         } catch (IOException | MalformedModelException e) {
@@ -156,7 +180,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         final Trainer trainer = this.getConfiguredTrainer(model, trainingModel);
 
         // Deep learning is typically trained in epochs where each epoch trains the model on each item in the dataset once.
-        int epoch = 5;
+        int epoch = trainingModel.getEpochs();
         for (int i = 0; i < epoch; ++i) {
             try {
                 for (Batch batch : trainer.iterateDataset(dataset)) {
@@ -187,7 +211,6 @@ public class DeepJavaServiceImpl implements DeepJavaService {
             block.add(Activation::relu);
         }
         block.add(Linear.builder().setUnits(trainingModel.getOutputLayer()).build());
-
         return block;
     }
 

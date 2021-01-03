@@ -37,6 +37,7 @@ public class TrainingModelEntity {
         this.trainingIntMin = trainingModel.getTrainingIntMin();
         this.outputLayer = trainingModel.getOutputLayer();
         this.id = trainingModel.getId();
+        this.epochs = trainingModel.getEpochs();
     }
 
     @Id
@@ -55,6 +56,8 @@ public class TrainingModelEntity {
     private Long trainingIntStart;
 
     private Long trainingIntEnd;
+
+    private Integer epochs;
 
     private Double trainingIntMax;
 
