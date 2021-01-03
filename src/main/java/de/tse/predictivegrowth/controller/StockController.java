@@ -45,7 +45,8 @@ public class StockController {
     @PostMapping(path = StringUtils.EMPTY)
     public StockHistorySummary requestStockHistoryFromProvider(@RequestParam final String stockIdentifier,
                                                @RequestParam final String dataProvider) {
-        return this.stockDataService.requestStockHistoryFromProvider(stockIdentifier, DataProvider.valueOf(dataProvider.toUpperCase()));
+        final DataProvider castedDataProvider = dataProvider.isBlank() ? DataProvider.ALPHAVANTAGE : DataProvider.valueOf(dataProvider.toUpperCase());
+        return this.stockDataService.requestStockHistoryFromProvider(stockIdentifier, castedDataProvider);
     }
 
     @Operation(summary = "Method deletes a stock history with a given technical id.",
