@@ -7,6 +7,7 @@ import de.tse.predictivegrowth.model.InOutData;
 import de.tse.predictivegrowth.model.NormalizationData;
 import de.tse.predictivegrowth.model.StockDayData;
 import de.tse.predictivegrowth.service.api.StockDataPreparationService;
+import de.tse.predictivegrowth.util.DataProcessUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.javatuples.Pair;
@@ -57,16 +58,13 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
 
     // Last Observation Carried Forward (LOCF) For StockDayData
     private List<StockDayData> locf(final List<StockDayData> stockDayDataList) {
-        final Iterator<StockDayData> iterator = stockDayDataList.iterator();
+        final List<StockDayData> result = new ArrayList<>();
+
         StockDayData lastStockDayData = null;
-        while(iterator.hasNext()) {
-
-            final StockDayData currentStockDayData = iterator.next();
-
+        for (final StockDayData currentStockDayData : stockDayDataList) {
             if (lastStockDayData != null) {
                 if (currentStockDayData.getLocalDate() == null) {
                     log.debug("Removed StockDayData item due to null date.");
-                    iterator.remove();
                     continue;
                 }
 
@@ -78,14 +76,14 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
                     currentStockDayData.setPriceVariance(lastStockDayData.getPriceVariance());
                 }
             }
-
+            result.add(currentStockDayData);
             lastStockDayData = currentStockDayData;
         }
-
-        return stockDayDataList;
+        return result;
     }
 
     private List<StockDayData> normalize(final List<StockDayData> stockDayDataList) {
+
         final List<Double> priceMeans = stockDayDataList.stream()
                 .map(StockDayData::getPriceMean)
                 .collect(Collectors.toList());
@@ -94,24 +92,24 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
         final Double mean_min = Collections.min(priceMeans);
 
         final List<Double> normalizedPriceMeans = priceMeans.stream()
-                .map(val -> this.getNormalizedValueForMinMax(val, mean_max, mean_min))
+                .map(val -> DataProcessUtil.getNormalizedValueForMinMax(val, mean_max, mean_min))
                 .collect(Collectors.toList());
-
-
-        final Iterator<StockDayData> itData = stockDayDataList.iterator();
-        final Iterator<Double> itMeans = normalizedPriceMeans.iterator();
 
         if (stockDayDataList.size() != priceMeans.size()) {
             throw new RuntimeException("List sizes do not match during normalization.");
         }
 
-        while(itData.hasNext()) {
-            final StockDayData stockDayData = itData.next();
-            final Double priceMean = itMeans.next();
-            stockDayData.setPriceMean(priceMean);
+        final List<StockDayData> result = new ArrayList<>();
+        for (int i=0; i < stockDayDataList.size(); i++) {
+            final StockDayData resVal = StockDayData.builder()
+                    .localDate(stockDayDataList.get(i).getLocalDate())
+                    .priceVariance(stockDayDataList.get(i).getPriceVariance())
+                    .priceMean(normalizedPriceMeans.get(i))
+                    .build();
+            result.add(resVal);
         }
 
-        return stockDayDataList;
+        return result;
     }
 
     private InOutData getInOutData(final List<StockDayData> stockDayDataList, final Integer seriesSize) {
@@ -145,10 +143,5 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
         final NDArray outputs = this.ndManager.create(meanDataArrayOutputs).reshape(new Shape(setSize, 1));
 
         return new InOutData(inputs, outputs);
-    }
-
-    private Double getNormalizedValueForMinMax(final Double value, final Double max, final Double min) {
-        return (value - min) / (max - min);
-        // denormalized_d = normalized_d * (max_d - min_d) + min_d
     }
 }

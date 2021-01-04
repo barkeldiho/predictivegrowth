@@ -97,6 +97,7 @@ public class DeepJavaServiceImpl implements DeepJavaService {
     }
 
     @Override
+    // Recursive multi-step forecasting vs direct multi-step forecasting -> direct recursive hybrid strategy
     public List<Double> getRollingPredictionForModel(final Long modelId, final Integer outputCount) {
         final TrainingModel trainingModel = this.trainingModelService.getTrainingModelById(modelId);
         final StockHistory stockHistory = this.stockDataService.getStockHistoryById(trainingModel.getHistoryId());
@@ -107,14 +108,16 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         float[] predictionValues = new float[trainingModel.getInputLayer()];
         int index = stockDayDataList.size() - trainingModel.getInputLayer();
         for (int i = 0; i < trainingModel.getInputLayer(); i++) {
-            predictionValues[i] = stockDayDataList.get(index).getPriceMean().floatValue();
+            predictionValues[i] = DataProcessUtil.getNormalizedValueForMinMax(stockDayDataList.get(index).getPriceMean(),
+                    trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin()).floatValue();
             index++;
         }
 
         final List<Double> resultList = new ArrayList<>();
         for (int i = 0; i < outputCount; i++) {
             final Double predictedValue = this.getPredictionValueForInputs(predictionModel, predictionValues, trainingModel.getInputLayer());
-            resultList.add(predictedValue);
+            final Double denormalizedPredictedValue = DataProcessUtil.getDenormalizedValueForMinMax(predictedValue, trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin());
+            resultList.add(denormalizedPredictedValue);
             predictionValues = DataProcessUtil.shiftArrayContentLeft(predictionValues);
             predictionValues[trainingModel.getInputLayer()-1] = predictedValue.floatValue();
         }
