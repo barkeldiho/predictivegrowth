@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,7 +41,8 @@ public class StockDataPreparationServiceImpl implements StockDataPreparationServ
         return new Pair<>(this.getInOutData(normalized, seriesSize), normalizationData);
     }
 
-    private List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
+    @Override
+    public List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd) {
         if (stockDayDataList.size() < (trainingIntEnd | trainingIntStart)
                 || (trainingIntEnd | trainingIntStart) < 0
                 || trainingIntEnd < trainingIntStart) {

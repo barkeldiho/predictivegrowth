@@ -38,6 +38,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.javatuples.Pair;
+import org.javatuples.Quartet;
+import org.javatuples.Triplet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,8 +51,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -77,6 +81,9 @@ public class DeepJavaServiceImpl implements DeepJavaService {
                 trainingModel.getInputLayer(),
                 trainingModel.getTrainingIntStart(), trainingModel.getTrainingIntEnd());
 
+        trainingModel.setTrainingIntMin(prepareReturn.getValue1().getTrainingIntMin());
+        trainingModel.setTrainingIntMax(prepareReturn.getValue1().getTrainingIntMax());
+
         // Prepare dataset
         final Dataset dataset = StockDataset.builder()
                 .setSampling(16, false)
@@ -86,36 +93,36 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         // Train DJL model
         final Model trainedDeepJavaModel = this.trainDeepJavaModel(trainingModel, dataset, stockHistory.getStockIdentifier());
         final List<ModelFile> modelFiles = this.getModelFilesAsByteArray(trainingModel.getInstanceName(), trainedDeepJavaModel);
+        final Quartet<Double, Double, Double, Integer> accuracyMetrics = this.getAccuracyMetrics(trainingModel, trainedDeepJavaModel, stockHistory.getStockDayDataList());
+
         trainedDeepJavaModel.close();
 
         // Update trainingModel
         trainingModel.setStatus(TrainingStatus.SUCCESS);
         trainingModel.setModelFiles(modelFiles);
-        trainingModel.setTrainingIntMin(prepareReturn.getValue1().getTrainingIntMin());
-        trainingModel.setTrainingIntMax(prepareReturn.getValue1().getTrainingIntMax());
+        trainingModel.setR2(accuracyMetrics.getValue0());
+        trainingModel.setMae(accuracyMetrics.getValue1());
+        trainingModel.setRmse(accuracyMetrics.getValue2());
+        trainingModel.setTlccMaxLag(accuracyMetrics.getValue3());
+
         this.trainingModelService.saveTrainingModel(trainingModel);
     }
 
     @Override
+    @Transactional
     // Recursive multi-step forecasting vs direct multi-step forecasting -> direct recursive hybrid strategy
-    public List<Double> getRollingPredictionForModel(final Long modelId, final Integer outputCount) {
+    public List<Double> getRollingPredictionForModel(final Long modelId, final Integer outputCount, final int start) {
         final TrainingModel trainingModel = this.trainingModelService.getTrainingModelById(modelId);
         final StockHistory stockHistory = this.stockDataService.getStockHistoryById(trainingModel.getHistoryId());
         final List<StockDayData> stockDayDataList = stockHistory.getStockDayDataList();
         final Model predictionModel = this.loadPredictionModel(trainingModel);
 
         // Prepare initial prediction inputs
-        float[] predictionValues = new float[trainingModel.getInputLayer()];
-        int index = stockDayDataList.size() - trainingModel.getInputLayer();
-        for (int i = 0; i < trainingModel.getInputLayer(); i++) {
-            predictionValues[i] = DataProcessUtil.getNormalizedValueForMinMax(stockDayDataList.get(index).getPriceMean(),
-                    trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin()).floatValue();
-            index++;
-        }
+        float[] predictionValues = this.getNormalizedPredictionValueArray(stockDayDataList, trainingModel, start-trainingModel.getInputLayer());
 
         final List<Double> resultList = new ArrayList<>();
         for (int i = 0; i < outputCount; i++) {
-            final Double predictedValue = this.getPredictionValueForInputs(predictionModel, predictionValues, trainingModel.getInputLayer());
+            final Double predictedValue = this.getPredictionValueForInputs(predictionModel, predictionValues);
             final Double denormalizedPredictedValue = DataProcessUtil.getDenormalizedValueForMinMax(predictedValue, trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin());
             resultList.add(denormalizedPredictedValue);
             predictionValues = DataProcessUtil.shiftArrayContentLeft(predictionValues);
@@ -125,8 +132,44 @@ public class DeepJavaServiceImpl implements DeepJavaService {
         return resultList;
     }
 
-    private Double getPredictionValueForInputs(final Model predictionModel, final float[] predictionValues, final int inputSize) {
-        final NDArray predictionInputs = this.ndManager.create(predictionValues).reshape(new Shape(1, inputSize));
+    private Quartet<Double, Double, Double, Integer> getAccuracyMetrics(final TrainingModel trainingModel, final Model predictionModel, final List<StockDayData> stockDayDataList) {
+        final List<Double> actual = new ArrayList<>();
+        final List<Double> predicted = new ArrayList<>();
+
+        // Prepare actual and predicted data
+        for (Long i = trainingModel.getVerificationIntStart(); i < trainingModel.getVerificationIntEnd(); i++) {
+                final float[] predictionValues = this.getNormalizedPredictionValueArray(stockDayDataList, trainingModel,
+                        (i.intValue() - trainingModel.getInputLayer()));
+                final Double predictedValue = DataProcessUtil.getDenormalizedValueForMinMax(
+                        this.getPredictionValueForInputs(predictionModel, predictionValues), trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin()
+                );
+                final Double actualValue = stockDayDataList.get(i.intValue()).getPriceMean();
+                actual.add(actualValue);
+                predicted.add(predictedValue);
+        }
+        final Double rSquared = DataProcessUtil.calcRSquared(actual, predicted);
+        final Double mae = DataProcessUtil.calcMeanAbsoluteError(actual, predicted);
+        final Double rmse = DataProcessUtil.calcRootMeanSquaredError(actual, predicted);
+        final List<Double> tlcc = DataProcessUtil.calcTlcc(actual, predicted);
+        // https://stackoverflow.com/a/55120938/10114822
+        final int timeLagWithMaxC = IntStream.range(0, tlcc.size()).boxed().max(Comparator.comparing(tlcc::get)).orElse(-1);
+        return new Quartet<>(rSquared, mae, rmse, timeLagWithMaxC);
+    }
+
+    private float[] getNormalizedPredictionValueArray(final List<StockDayData> stockDayDataList, final TrainingModel trainingModel, final int start) {
+        @SuppressWarnings("UnnecessaryUnboxing")
+        float[] predictionValues = new float[trainingModel.getInputLayer().intValue()];
+        int index = start;
+        for (int i = 0; i < trainingModel.getInputLayer(); i++) {
+            predictionValues[i] = DataProcessUtil.getNormalizedValueForMinMax(stockDayDataList.get(index).getPriceMean(),
+                    trainingModel.getTrainingIntMax(), trainingModel.getTrainingIntMin()).floatValue();
+            index++;
+        }
+        return predictionValues;
+    }
+
+    private Double getPredictionValueForInputs(final Model predictionModel, final float[] predictionValues) {
+        final NDArray predictionInputs = this.ndManager.create(predictionValues).reshape(new Shape(1, predictionValues.length));
 
         // Predict & Return
         final Predictor<NDList, NDList> predictor = predictionModel.newPredictor(new NoopTranslator());

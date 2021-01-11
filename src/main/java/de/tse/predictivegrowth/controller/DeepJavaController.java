@@ -33,7 +33,8 @@ public class DeepJavaController {
     @Operation(summary = "Method uses a training model to create an anctual DJL model.",
             description = "Method uses a training model and its properties to train a DJL model which is then saved as model file for the training model.")
     @GetMapping(path = "/{modelId}/predict/{outputCount}")
-    public List<Double> getRollingPredictionForModel(@PathVariable final Long modelId, @PathVariable final Integer outputCount) {
-        return this.deepJavaService.getRollingPredictionForModel(modelId, outputCount);
+    public List<Double> getRollingPredictionForModel(@PathVariable final Long modelId, @PathVariable final Integer outputCount, @RequestParam(required = false) Integer start) {
+        start = (start == null) ? 0 : start;
+        return this.deepJavaService.getRollingPredictionForModel(modelId, outputCount, start);
     }
 }

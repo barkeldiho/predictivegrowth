@@ -10,4 +10,6 @@ import java.util.List;
 public interface StockDataPreparationService {
 
     Pair<InOutData, NormalizationData> fullyPrepare(final List<StockDayData> stockDayDataList, final Integer seriesSize, final Long trainingIntStart, final Long trainingIntEnd);
+
+    List<StockDayData> cutToTrainingSet(final List<StockDayData> stockDayDataList, final Long trainingIntStart, final Long trainingIntEnd);
 }

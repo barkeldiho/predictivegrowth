@@ -31,9 +31,23 @@ public class TrainingModel {
         this.trainingIntEnd = trainingModelEntity.getTrainingIntEnd();
         this.trainingIntMax = trainingModelEntity.getTrainingIntMax();
         this.trainingIntMin = trainingModelEntity.getTrainingIntMin();
+        if (trainingModelEntity.getR2() != null) {
+            this.r2 = trainingModelEntity.getR2();
+        }
+        if (trainingModelEntity.getMae() != null) {
+            this.mae = trainingModelEntity.getMae();
+        }
+        if (trainingModelEntity.getRmse() != null) {
+            this.rmse = trainingModelEntity.getRmse();
+        }
+        if (trainingModelEntity.getTlccMaxLag() != null) {
+            this.tlccMaxLag = trainingModelEntity.getTlccMaxLag();
+        }
         this.outputLayer = trainingModelEntity.getOutputLayer();
         this.id = trainingModelEntity.getId();
         this.epochs = trainingModelEntity.getEpochs();
+        this.verificationIntStart = trainingModelEntity.getVerificationIntStart();
+        this.verificationIntEnd = trainingModelEntity.getVerificationIntEnd();
     }
 
     private Long id;
@@ -57,6 +71,12 @@ public class TrainingModel {
     private Long trainingIntEnd;
 
     @NotNull
+    private Long verificationIntStart;
+
+    @NotNull
+    private Long verificationIntEnd;
+
+    @NotNull
     private Integer epochs;
 
     @JsonIgnore
@@ -64,6 +84,14 @@ public class TrainingModel {
 
     @JsonIgnore
     private Double trainingIntMin;
+
+    private Double r2;
+
+    private Double mae;
+
+    private Double rmse;
+
+    private Integer tlccMaxLag;
 
     private TrainingStatus status = TrainingStatus.NONE;
 
