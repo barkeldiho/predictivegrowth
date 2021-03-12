@@ -1,15 +1,15 @@
 # Predictive Growth
 
-## Installation
+## Summary
+Example project for the usage of AWS' Deep Java Library for time series forecasting.
 
-To build the backend Java 11 (or higher) and Maven are required. Docker is required for an immediate deployment on a local instance via the docker-compose instructions or for building docker images for a productive deployment.
+## Installation
+ - Java 11 and Maven are required. 
+ - Docker is required for an immediate deployment on a local instance via the docker-compose instructions or for building docker images for a productive deployment.
 
 ## Usage
-
-The backend generates swagger-API definitions available at http://localhost:9090/swagger-ui.html and OpenAPI definitions at http://localhost:9090/api-docs.
-
-
-## Philosophy
+ - Swagger-API definitions available at http://localhost:9090/swagger-ui.html
+ - OpenAPI definitions at http://localhost:9090/api-docs.
 
 ## License
 Predictive Growth is Copyright © 2021 by barkeldiho
