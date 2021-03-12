@@ -1,7 +1,7 @@
 # Predictive Growth
 
 ## Summary
-Example project for the usage of AWS' Deep Java Library for time series forecasting.
+Predictive Growth is an example project to showcase the usage of AWS' Deep Java Library (DJL) for time series forecasting of daily stock prices.
 
 ## Installation
  - Java 11 and Maven are required. 
