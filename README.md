@@ -12,4 +12,5 @@ The backend generates swagger-API definitions available at http://localhost:9090
 ## Philosophy
 
 ## License
-Predictive Growth is Copyright © 2021 by Dr. Thomas Seine (barkeldiho)
+Predictive Growth is Copyright © 2022 by Dr. Thomas Seine (barkeldiho)
+~~~~
