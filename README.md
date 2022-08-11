@@ -12,7 +12,7 @@ Predictive Growth is an example project to showcase the usage of AWS' Deep Java 
  - OpenAPI definitions at http://localhost:9090/api-docs.
 
 ## License
-Predictive Growth is Copyright © 2021 by barkeldiho
+Predictive Growth is Copyright © 2022 by barkeldiho
 
 ## Copyright information
 Social Media image: Growth icons created by Freepik - Flaticon
