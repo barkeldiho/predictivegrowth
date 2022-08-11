@@ -13,3 +13,6 @@ Predictive Growth is an example project to showcase the usage of AWS' Deep Java 
 
 ## License
 Predictive Growth is Copyright © 2021 by barkeldiho
+
+## Copyright information
+Social Media image: Growth icons created by Freepik - Flaticon
