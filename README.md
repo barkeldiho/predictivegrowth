@@ -1,3 +1,5 @@
+![License Badge](https://img.shields.io/github/license/barkeldiho/predictivegrowth?style=shield)
+![Build Badge](https://circleci.com/gh/barkeldiho/predictivegrowth.svg?style=shield)
 # Predictive Growth
 ![Logo](predictivegrowth_logo.png)
 

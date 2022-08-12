@@ -5,7 +5,7 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  say-hello:
+  predictivegrowth:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
@@ -15,12 +15,35 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: Install Docker Compose
+          environment:
+            COMPOSE_VERSION: '1.29.2'
+          command: |
+            curl -L "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o ~/docker-compose
+            chmod +x ~/docker-compose
+            sudo mv ~/docker-compose /usr/local/bin/docker-compose
+      - setup_remote_docker
+      - run:
+          name: Build images of services declared in docker-compose.yml
+          command: docker-compose build
+      - run:
+          name: Start docker-compose and verify service(s)
+          command: |
+            # Setting the Docker Compose project name to "circleci-demo-docker" means
+            # the names of our services' containers would be prefixed with "circleci-demo-docker".
+            docker-compose up -d
+
+            # In this example, we have a "contacts" service, and
+            # we are trying to check, via `dockerize`, if the service is ready.
+            docker container run --network container:pg-server \
+              docker.io/jwilder/dockerize \
+              -wait http://localhost:9090/healthcheck \
+              -wait-retry-interval 2s \
+              -timeout 20s
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
+  check_build_predictivegrowth:
     jobs:
-      - say-hello
+      - predictivegrowth
