@@ -12,8 +12,5 @@ Predictive Growth is an example project to showcase the usage of AWS' Deep Java 
  - Swagger-API definitions available at http://localhost:9090/swagger-ui.html
  - OpenAPI definitions at http://localhost:9090/api-docs.
 
-## License
-Predictive Growth is Copyright © 2022 by barkeldiho
-
 ## Copyright information
 Social Media image: Growth icons created by Freepik - Flaticon
