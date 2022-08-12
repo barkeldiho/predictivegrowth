@@ -1,8 +1,8 @@
-version: 2.1
 orbs:
-  maven-build: inclasstoday/maven-build@1.0.9
+  maven: circleci/maven@1.3.0
+version: 2.1
 workflows:
-  check_predictivegrowth:
+  maven_test:
     jobs:
-      - maven-build/docker_build:
-          context: maven-build
+      - maven/test:
+          command: '-X verify'
