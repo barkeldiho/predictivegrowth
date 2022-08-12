@@ -9,7 +9,7 @@ services:
       - 9090:9090
       - 9091:9091
     environment:
-      - JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,address=*:9091,suspend=n,server=y
+      - JAVA_TOOL_OPTIONS=-agentlib:jdwp=transport=dt_socket,address=*:9091,suspend=n,server=y
     networks:
       - pg-network
     links:

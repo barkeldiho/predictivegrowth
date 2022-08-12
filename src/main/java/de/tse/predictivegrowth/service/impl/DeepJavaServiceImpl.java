@@ -221,6 +221,9 @@ public class DeepJavaServiceImpl implements DeepJavaService {
                 for (Batch batch : trainer.iterateDataset(dataset)) {
                     EasyTrain.trainBatch(trainer, batch);
                     trainer.step();
+                    // LOGGING
+                    trainer.getTrainingResult().getValidateEvaluation("Accuracy");
+
                     batch.close();
                 }
             } catch (Exception e) {
@@ -229,7 +232,6 @@ public class DeepJavaServiceImpl implements DeepJavaService {
             // Call the end epoch event for the training listeners
             trainer.notifyListeners(listener -> listener.onEpoch(trainer));
         }
-
         model.setProperty("Stock", stockIdentifier);
         model.setProperty("Epoch", String.valueOf(epoch));
         model.setProperty("Timestamp", ZonedDateTime.now().toString());

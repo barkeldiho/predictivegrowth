@@ -9,5 +9,4 @@ public class PredictivegrowthApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(PredictivegrowthApplication.class, args);
 	}
-
 }

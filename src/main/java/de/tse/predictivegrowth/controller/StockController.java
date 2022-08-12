@@ -56,13 +56,4 @@ public class StockController {
     public void deleteStockHistory(@PathVariable final Long id) {
         this.stockDataService.deleteStockHistory(id);
     }
-
-    // calculate model
-
-
-    //POST request new stockhistory
-
-    //DELETE stockhistory
-
-    // create new trainingmodel -> triggers analysis
 }
