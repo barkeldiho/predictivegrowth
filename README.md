@@ -1,4 +1,5 @@
 # Predictive Growth
+![Logo](predictivegrowth_logo.png)
 
 ## Summary
 Predictive Growth is an example project to showcase the usage of AWS' Deep Java Library (DJL) for time series forecasting of daily stock prices.
