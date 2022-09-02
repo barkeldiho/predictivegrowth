@@ -7,6 +7,7 @@
 
 ## Summary
 Predictive Growth is an example project to showcase the usage of AWS' Deep Java Library (DJL) for time series forecasting of daily stock prices.
+Please read [my blog article](https://thomasseine.com/2022/09/02/deep-learning-in-java-with-aws-deep-java-library-a-minimum-viable-approach/) for a full explanation of the project.
 
 ## Installation
  - Java 17 and Maven are required. 
